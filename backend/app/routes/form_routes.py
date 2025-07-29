@@ -1,10 +1,12 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from app.database import forms_collection
 from app.schemas import Form
 from bson import ObjectId
 import json
 from flask_jwt_extended import jwt_required
 from datetime import datetime
+from io import BytesIO
+from app.excel_generator import generate_practice_excel
 
 form_bp = Blueprint('form', __name__)
 
@@ -18,13 +20,30 @@ def get_forms():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# NUEVA RUTA: Obtener formulario por ID
+@form_bp.route('/forms/<form_id>', methods=['GET'])
+def get_form(form_id):
+    try:
+        form = forms_collection.find_one({'_id': ObjectId(form_id)})
+        if not form:
+            return jsonify({"error": "Formulario no encontrado"}), 404
+        form['_id'] = str(form['_id'])
+        return jsonify(form), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @form_bp.route('/forms/<form_id>/sign', methods=['PUT'])
 def sign_form(form_id):
     try:
         data = request.json
-        role = data.get('role')
-        signature = data.get('signature')
-        update_data = {f"signatures.{role}": signature}
+        signatures = data.get('signatures', {})
+        
+        update_data = {
+            "signatures.student": signatures.get('student', ''),
+            "signatures.boss": signatures.get('boss', ''),
+            "signatures.advisor": signatures.get('advisor', ''),
+            "signed_at": datetime.now()
+        }
         
         result = forms_collection.update_one(
             {"_id": ObjectId(form_id)},
@@ -32,8 +51,8 @@ def sign_form(form_id):
         )
 
         if result.modified_count > 0:
-            return jsonify({"message": "Signature added successfully"}), 200
-        return jsonify({"error": "Form not updated"}), 400
+            return jsonify({"message": "Firmas guardadas exitosamente"}), 200
+        return jsonify({"error": "Formulario no encontrado"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -50,34 +69,45 @@ def create_form():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@form_bp.route('/forms/<form_id>', methods=['PATCH'])
-@jwt_required()
+@form_bp.route('/forms/<form_id>', methods=['PUT'])
 def update_form(form_id):
+    data = request.json
+    # Elimina el campo _id si viene en el body para evitar error de Mongo
+    if '_id' in data:
+        del data['_id']
+    result = forms_collection.update_one(
+        {'_id': ObjectId(form_id)},
+        {'$set': data}
+    )
+    if result.matched_count:
+        return jsonify({"message": "Formulario actualizado correctamente"}), 200
+    else:
+        return jsonify({"error": "Formulario no encontrado"}), 404
+    
+@form_bp.route('/forms/<form_id>/download', methods=['GET'])
+@jwt_required()
+def download_form(form_id):
     try:
-        # Verificar que el ID sea válido
-        if not ObjectId.is_valid(form_id):
-            return jsonify({"error": "ID de formulario inválido"}), 400
+        form = forms_collection.find_one({"_id": ObjectId(form_id)})
+        if not form:
+            return jsonify({"error": "Formulario no encontrado"}), 404
         
-        data = request.get_json()
-        new_status = data.get('status')
+        # Generar el Excel
+        excel_file = generate_practice_excel(form)
         
-        if not new_status:
-            return jsonify({"error": "El campo 'status' es requerido"}), 400
+        # Crear respuesta
+        output = BytesIO()
+        excel_file.save(output)
+        output.seek(0)
         
-        # Actualizar en MongoDB
-        result = forms_collection.update_one(
-            {"_id": ObjectId(form_id)},
-            {"$set": {"status": new_status}}
+        return Response(
+            output,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename=formato_practica_{form_id}.xlsx",
+                "Cache-Control": "no-cache"
+            }
         )
-        
-        if result.modified_count == 0:
-            return jsonify({"error": "Formulario no encontrado o sin cambios"}), 404
-        
-        return jsonify({
-            "message": "Estado actualizado correctamente",
-            "form_id": form_id,
-            "new_status": new_status
-        }), 200
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500

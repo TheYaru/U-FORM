@@ -1,5 +1,21 @@
 import React from 'react';
 
+const funcionesPorCarrera = {
+    'Ingeniería de Software': [
+        'Desarrollar aplicaciones web',
+        'Realizar pruebas de software',
+        'Documentar procesos',
+        'Participar en reuniones de equipo'
+    ],
+    'Diseño Gráfico': [
+        'Diseñar piezas publicitarias',
+        'Editar imágenes',
+        'Crear contenido visual',
+        'Colaborar en campañas de marketing'
+    ],
+    // Agrega más carreras y funciones según tu necesidad
+};
+
 const FormPractice = ({ data, onChange, onNestedChange }) => {
     return (
         <div className="mb-6">
@@ -83,6 +99,19 @@ const FormPractice = ({ data, onChange, onNestedChange }) => {
                         required
                     />
                 </div>
+
+                {/* Horas mínimas requeridas */}
+                <div className="mb-4">
+                    <label className="block text-gray-700 mb-2">Horas mínimas requeridas*</label>
+                    <input
+                        type="number"
+                        value={data.hours}
+                        onChange={(e) => onChange('hours', e.target.value)}
+                        className="w-full px-3 py-2 border rounded"
+                        placeholder="480 para Tecnología, 640 para Profesional"
+                        required
+                    />
+                </div>
                 
                 {/* Horario de trabajo */}
                 <div className="mb-4">
@@ -138,18 +167,88 @@ const FormPractice = ({ data, onChange, onNestedChange }) => {
                         <span>Sí</span>
                     </div>
                 </div>
+
+                {/* Selección de carrera */}
+                <div className="mb-4 md:col-span-2">
+                    <label className="block text-gray-700 mb-2">Carrera</label>
+                    <select
+                        value={data.career}
+                        onChange={(e) => onChange('career', e.target.value)}
+                        className="w-full px-3 py-2 border rounded"
+                        required
+                    >
+                        <option value="">Seleccione una carrera</option>
+                        <option value="Ingeniería de Software">Ingeniería de Software</option>
+                        <option value="Diseño Gráfico">Diseño Gráfico</option>
+                        {/* Agrega aquí más carreras según tu lista */}
+                    </select>
+                </div>
                 
                 {/* Funciones a desempeñar */}
                 <div className="mb-4 md:col-span-2">
                     <label className="block text-gray-700 mb-2">Funciones a desempeñar</label>
-                    <textarea
-                        value={data.functions}
-                        onChange={(e) => onChange('functions', e.target.value)}
-                        className="w-full px-3 py-2 border rounded"
-                        rows="3"
-                        placeholder="Describe las principales responsabilidades..."
-                        required
-                    ></textarea>
+                    {/* Si tienes la carrera en data.career, muestra las funciones relacionadas */}
+                    {data.career && funcionesPorCarrera[data.career] ? (
+                        <div className="mb-2">
+                            {funcionesPorCarrera[data.career].map((funcion, idx) => (
+                                <div key={idx} className="flex items-center mb-1">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.selectedFunctions?.includes(funcion) || false}
+                                        onChange={(e) => {
+                                            const selected = data.selectedFunctions || [];
+                                            if (e.target.checked) {
+                                                onChange('selectedFunctions', [...selected, funcion]);
+                                            } else {
+                                                onChange('selectedFunctions', selected.filter(f => f !== funcion));
+                                            }
+                                        }}
+                                        className="mr-2"
+                                    />
+                                    <span>{funcion}</span>
+                                </div>
+                            ))}
+                            {/* Opción para agregar otra función */}
+                            <div className="flex items-center mb-1">
+                                <input
+                                    type="checkbox"
+                                    checked={!!data.otraFuncion}
+                                    onChange={(e) => onChange('otraFuncion', e.target.checked ? '' : null)}
+                                    className="mr-2"
+                                />
+                                <span>Otra</span>
+                            </div>
+                            {data.otraFuncion !== null && (
+                                <input
+                                    type="text"
+                                    value={data.otraFuncion || ''}
+                                    onChange={(e) => onChange('otraFuncion', e.target.value)}
+                                    className="w-full px-3 py-2 border rounded mt-1"
+                                    placeholder="Describe otra función"
+                                />
+                            )}
+                            {/* Descripción adicional */}
+                            {(data.selectedFunctions?.length > 0 || data.otraFuncion) && (
+                                <textarea
+                                    value={data.functionsDescription || ''}
+                                    onChange={(e) => onChange('functionsDescription', e.target.value)}
+                                    className="w-full px-3 py-2 border rounded mt-2"
+                                    rows="2"
+                                    placeholder="Describe con más detalle las funciones seleccionadas..."
+                                ></textarea>
+                            )}
+                        </div>
+                    ) : (
+                        // Si no hay carrera seleccionada, muestra el textarea tradicional
+                        <textarea
+                            value={data.functions}
+                            onChange={(e) => onChange('functions', e.target.value)}
+                            className="w-full px-3 py-2 border rounded"
+                            rows="3"
+                            placeholder="Describe las principales responsabilidades..."
+                            required
+                        ></textarea>
+                    )}
                 </div>
                 
                 {/* Recursos proporcionados */}

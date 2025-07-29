@@ -7,7 +7,8 @@ import AuthProvider from './context/AuthContext'; // Importa el proveedor
 import PrivateRoutes from './routes/PrivateRoutes';
 import PublicRoutes from './routes/PublicRoutes';
 import SuccessPage from './pages/SuccessPage';
-import EstadisticsPage from './pages/StadisticsPage';
+import EstadisticsPage from './pages/StadisticsPage'; 
+import AdminEditForm from './pages/AdminEditForm';  
 
 function App() {
     return (
@@ -22,6 +23,7 @@ function App() {
                     <Route element={<PrivateRoutes />}>
                         <Route path="/admin" element={<AdminPage />} />
                         <Route path="/admin/stats" element={<EstadisticsPage />} />
+                        <Route path="/admin/editar/:id" element={<AdminEditForm />} />
                     </Route>
                     
                     <Route path="*" element={<Navigate to="/" />} />

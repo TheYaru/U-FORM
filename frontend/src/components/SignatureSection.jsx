@@ -1,91 +1,110 @@
-import React, { useRef } from 'react';
-import SignatureCanvas from 'react-signature-canvas';
+import React, { useState, useRef } from 'react';
+import SignaturePad from 'react-signature-canvas';
 
 const SignatureSection = ({ onSave }) => {
-    const sigRef = useRef(null);
-    
-    const clearSignature = () => {
-        sigRef.current.clear();
-    };
+    const [signature, setSignature] = useState('');
+    const [bossSignature, setBossSignature] = useState('');
+    const [advisorSignature, setAdvisorSignature] = useState('');
+    const signaturePadRef = useRef(null);
+    const bossSignaturePadRef = useRef(null);
+    const advisorSignaturePadRef = useRef(null);
 
-    const saveSignature = () => {
-        if (sigRef.current.isEmpty()) {
-            alert('Por favor, proporciona tu firma');
-            return;
-        }
-        const signature = sigRef.current.toDataURL();
-        onSave(signature);
+    const handleSave = () => {
+        onSave({
+            student: signature,
+            boss: bossSignature,
+            advisor: advisorSignature
+        });
+        alert('Firmas guardadas correctamente');
     };
 
     return (
         <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">6. Firma del Estudiante</h2>
+            <h2 className="text-xl font-semibold mb-4">6. Firmas</h2>
             
-            <div className="border rounded p-4 bg-white mb-4">
-                <SignatureCanvas
-                    ref={sigRef}
-                    penColor="black"
-                    canvasProps={{
-                        className: 'signature-canvas w-full h-40 bg-gray-100'
-                    }}
-                />
-                <p className="text-center text-sm text-gray-500">Firma aquí</p>
-            </div>
-            
-            <div className="flex space-x-2 mb-4">
-                <button 
-                    type="button"
-                    onClick={clearSignature}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition"
-                >
-                    Limpiar
-                </button>
-                <button 
-                    type="button"
-                    onClick={saveSignature}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition"
-                >
-                    Guardar Firma
-                </button>
-            </div>
-            
-            <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-200">
-                <h3 className="font-semibold text-red-800 mb-2">Declaración Final</h3>
-                <p className="text-sm text-red-700 mb-3">
-                    Al guardar mi firma, declaro bajo juramento que toda la información proporcionada en este formulario 
-                    es verídica y completa. Acepto los términos del convenio de prácticas profesionales y me comprometo 
-                    a cumplir con todas las obligaciones establecidas.
-                </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
-                        <label className="block text-gray-700 mb-2">Fecha de firma</label>
-                        <input
-                            type="date"
-                            className="w-full px-3 py-2 border rounded"
-                            value={new Date().toISOString().split('T')[0]}
-                            readOnly
-                        />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Firma del Estudiante */}
+                <div className="border p-4 rounded-lg">
+                    <h3 className="font-bold mb-2">Estudiante Practicante</h3>
+                    <SignaturePad
+                        canvasProps={{width: 300, height: 150, className: 'sigCanvas border'}}
+                        ref={signaturePadRef}
+                    />
+                    <div className="flex gap-2 mt-2">
+                        <button 
+                            onClick={() => setSignature(signaturePadRef.current.toDataURL())}
+                            className="bg-blue-500 text-white px-3 py-1 rounded"
+                        >
+                            Guardar Firma
+                        </button>
+                        <button 
+                            onClick={() => signaturePadRef.current.clear()}
+                            className="bg-gray-500 text-white px-3 py-1 rounded"
+                        >
+                            Limpiar
+                        </button>
                     </div>
-                    
-                    <div>
-                        <label className="block text-gray-700 mb-2">Lugar de firma</label>
-                        <input
-                            type="text"
-                            className="w-full px-3 py-2 border rounded"
-                            placeholder="Ciudad, Departamento"
-                            required
-                        />
+                </div>
+                
+                {/* Firma del Jefe Inmediato */}
+                <div className="border p-4 rounded-lg">
+                    <h3 className="font-bold mb-2">Jefe Inmediato</h3>
+                    <SignaturePad
+                        canvasProps={{width: 300, height: 150, className: 'sigCanvas border'}}
+                        ref={bossSignaturePadRef}
+                    />
+                    <div className="flex gap-2 mt-2">
+                        <button 
+                            onClick={() => setBossSignature(bossSignaturePadRef.current.toDataURL())}
+                            className="bg-blue-500 text-white px-3 py-1 rounded"
+                        >
+                            Guardar Firma
+                        </button>
+                        <button 
+                            onClick={() => bossSignaturePadRef.current.clear()}
+                            className="bg-gray-500 text-white px-3 py-1 rounded"
+                        >
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+
+                {/* Firma del Docente Asignado */}
+                <div className="border p-4 rounded-lg">
+                    <h3 className="font-bold mb-2">Docente Asignado</h3>
+                    <SignaturePad
+                        canvasProps={{width: 300, height: 150, className: 'sigCanvas border'}}
+                        ref={advisorSignaturePadRef}
+                    />
+                    <div className="flex gap-2 mt-2">
+                        <button 
+                            onClick={() => setAdvisorSignature(advisorSignaturePadRef.current.toDataURL())}
+                            className="bg-blue-500 text-white px-3 py-1 rounded"
+                        >
+                            Guardar Firma
+                        </button>
+                        <button 
+                            onClick={() => advisorSignaturePadRef.current.clear()}
+                            className="bg-gray-500 text-white px-3 py-1 rounded"
+                        >
+                            Limpiar
+                        </button>
                     </div>
                 </div>
             </div>
             
-            <div className="mt-6 p-4 bg-yellow-50 rounded border border-yellow-200">
-                <p className="text-yellow-700 text-sm">
-                    <span className="font-bold">Importante:</span> 
-                    Tu firma digital tiene la misma validez legal que una firma manuscrita. 
-                    Guarda una copia de este formulario para tus registros personales.
-                </p>
+            <div className="mt-6">
+                <button 
+                    onClick={handleSave}
+                    disabled={!signature || !bossSignature || !advisorSignature}
+                    className={`px-4 py-2 rounded ${
+                        signature && bossSignature && advisorSignature
+                            ? 'bg-green-500 hover:bg-green-600 text-white' 
+                            : 'bg-gray-400 cursor-not-allowed'
+                    }`}
+                >
+                    Confirmar Firmas
+                </button>
             </div>
         </div>
     );

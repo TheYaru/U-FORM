@@ -75,64 +75,75 @@ const StatisticsPanel = ({ forms }) => {
 
     return (
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4">Estadísticas</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center border-b pb-4">Estadísticas</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded">
+            {/* Tarjetas de resumen */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-gray-50 p-4 rounded shadow flex flex-col items-center border">
                     <p className="text-sm text-gray-500">Total formularios</p>
-                    <p className="text-2xl font-bold">{stats.total}</p>
+                    <p className="text-3xl font-extrabold text-gray-800">{stats.total}</p>
                 </div>
-                <div className="bg-yellow-50 p-4 rounded">
+                <div className="bg-yellow-50 p-4 rounded shadow flex flex-col items-center border">
                     <p className="text-sm text-gray-500">Pendientes</p>
-                    <p className="text-2xl font-bold">{stats.pending}</p>
+                    <p className="text-3xl font-extrabold text-yellow-700">{stats.pending}</p>
                 </div>
-                <div className="bg-green-50 p-4 rounded">
+                <div className="bg-green-50 p-4 rounded shadow flex flex-col items-center border">
                     <p className="text-sm text-gray-500">Aprobados</p>
-                    <p className="text-2xl font-bold">{stats.approved}</p>
+                    <p className="text-3xl font-extrabold text-green-700">{stats.approved}</p>
                 </div>
-                <div className="bg-red-50 p-4 rounded">
+                <div className="bg-red-50 p-4 rounded shadow flex flex-col items-center border">
                     <p className="text-sm text-gray-500">Rechazados</p>
-                    <p className="text-2xl font-bold">{stats.rejected}</p>
+                    <p className="text-3xl font-extrabold text-red-700">{stats.rejected}</p>
                 </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="h-64">
-                    <Bar 
-                        data={statusData} 
-                        options={{ 
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'top',
+
+            <hr className="my-6" />
+
+            {/* Gráficos */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-gray-50 p-4 rounded shadow border flex flex-col">
+                    <h3 className="text-lg font-semibold mb-2 text-center">Formularios por Estado</h3>
+                    <div className="flex-1 h-64">
+                        <Bar 
+                            data={statusData} 
+                            options={{ 
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                    },
+                                    title: {
+                                        display: false,
+                                    },
                                 },
-                                title: {
-                                    display: true,
-                                    text: 'Formularios por Estado',
-                                },
-                            },
-                        }} 
-                    />
+                            }} 
+                        />
+                    </div>
                 </div>
                 
-                <div className="h-64">
-                    <Pie 
-                        data={getPracticeModeData()} 
-                        options={{ 
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'top',
+                {/* Separador solo visible en móvil */}
+                <hr className="block md:hidden my-8 border-t-2 border-gray-500 rounded-full" />
+
+                <div className="bg-gray-50 p-4 rounded shadow border flex flex-col">
+                    <h3 className="text-lg font-semibold mb-2 text-center">Modalidad de Práctica</h3>
+                    <div className="flex-1 h-64">
+                        <Pie 
+                            data={getPracticeModeData()} 
+                            options={{ 
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                    },
+                                    title: {
+                                        display: false,
+                                    },
                                 },
-                                title: {
-                                    display: true,
-                                    text: 'Modalidad de Práctica',
-                                },
-                            },
-                        }} 
-                    />
+                            }} 
+                        />
+                    </div>
                 </div>
             </div>
         </div>

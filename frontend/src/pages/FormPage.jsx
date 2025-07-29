@@ -8,7 +8,6 @@ import CommitmentsSection from "../components/FormCommitments";
 import SignatureSection from "../components/SignatureSection";
 import { createForm } from '../services/formService';
 
-
 const FormPage = () => {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState(() => {
@@ -17,7 +16,7 @@ const FormPage = () => {
             student: {
                 fullName: '',
                 documentType: 'CC',
-                documentNumber: '',
+                documentNumber: '', 
                 educationLevel: 'Tecnología',
                 academicProgram: '',
                 phone: '',
@@ -39,7 +38,9 @@ const FormPage = () => {
                 fullName: '',
                 position: '',
                 email: '',
-                phone: ''
+                phone: '',
+                documentType: 'CC',
+                documentNumber: ''
             },
             practice: {
                 modality: 'CONVENIO',
@@ -52,17 +53,25 @@ const FormPage = () => {
                 isPaid: false,
                 salary: '',
                 providesUniform: false,
+                selectedFunctions: [],
+                otraFuncion: null,
+                functionsDescription: '',
                 functions: '',
                 resources: {
                     computer: false,
                     others: false,
                     othersDescription: ''
                 },
-                advisor: ''
+                hours: '',
+                advisor: '',
+                career: ''
             },
             commitments: {
                 reports: false,
-                compliance: false
+                compliance: false,
+                attendance: false,
+                confidentiality: false,
+                intellectualProperty: false
             },
             signatures: {
                 student: '',
@@ -73,6 +82,8 @@ const FormPage = () => {
     });
     
     const [signature, setSignature] = useState('');
+    const [bossSignature, setBossSignature] = useState('');
+    const [advisorSignature, setAdvisorSignature] = useState('');
     const navigate = useNavigate();
 
     // Guardar datos en localStorage
@@ -103,70 +114,103 @@ const FormPage = () => {
         }));
     };
 
-    const handleSignatureSave = (sig) => {
-        setSignature(sig);
-        alert('Firma guardada correctamente');
+    const handleSignatureSave = (signatures) => {
+        setSignature(signatures.student);
+        setBossSignature(signatures.boss);
+        setAdvisorSignature(signatures.advisor);
+        setFormData(prev => ({
+            ...prev,
+            signatures: {
+                student: signatures.student,
+                boss: signatures.boss,
+                advisor: signatures.advisor
+            }
+        }));
+        alert('Firmas guardadas correctamente');
+    };
+
+    // Aquí procesamos las funciones seleccionadas antes de enviar
+    const processPracticeFunctions = (practice) => {
+        if (practice.selectedFunctions?.length > 0 || practice.otraFuncion || practice.functionsDescription) {
+            const funcionesFinal = [
+                ...(practice.selectedFunctions || []),
+                ...(practice.otraFuncion ? [practice.otraFuncion] : [])
+            ].join(', ');
+            return funcionesFinal + (practice.functionsDescription ? ` - ${practice.functionsDescription}` : '');
+        }
+        return practice.functions || '';
     };
 
     const handleSubmit = async () => {
         try {
+            // Procesar funciones antes de enviar
+            const processedPractice = {
+                ...formData.practice,
+                functions: processPracticeFunctions(formData.practice)
+            };
+
             const completeFormData = {
                 ...formData,
+                practice: processedPractice,
                 signatures: {
-                    ...formData.signatures,
-                    student: signature
+                    student: signature,
+                    boss: bossSignature,
+                    advisor: advisorSignature
                 }
             };
-            
-            await createForm(completeFormData);
+
+            console.log('Enviando formulario:', completeFormData);
+
+            const response = await createForm(completeFormData);
+            console.log('Respuesta del servidor:', response);
+
             localStorage.removeItem('formData');
-            navigate('/success');
+            navigate('/success', { state: { formId: response.id } });
         } catch (error) {
-            console.error('Error al guardar el formulario:', error);
-            alert('Error al enviar el formulario: ' + error.message);
+            console.error('Error completo:', error);
+            alert(`Error al enviar el formulario: ${error.message}`);
         }
     };
 
     const nextStep = () => {
-        // Validación básica antes de avanzar
         let valid = true;
         let errorMessage = '';
         
         switch(step) {
-            case 1: // Estudiante
+            case 1:
                 if (!formData.student.fullName || !formData.student.documentNumber) {
                     valid = false;
                     errorMessage = 'Nombre completo y documento son requeridos';
                 }
                 break;
-            case 2: // Empresa
+            case 2:
                 if (!formData.company.name || !formData.company.nit) {
                     valid = false;
                     errorMessage = 'Nombre de empresa y NIT son requeridos';
                 }
                 break;
-            case 3: // Jefe
+            case 3:
                 if (!formData.boss.fullName || !formData.boss.position) {
                     valid = false;
                     errorMessage = 'Nombre y cargo del jefe son requeridos';
                 }
                 break;
-            case 4: // Práctica
+            case 4:
                 if (!formData.practice.position || !formData.practice.startDate) {
                     valid = false;
                     errorMessage = 'Cargo y fecha de inicio son requeridos';
                 }
                 break;
-            case 5: // Compromisos
+            case 5:
                 if (!formData.commitments.reports || !formData.commitments.compliance) {
                     valid = false;
                     errorMessage = 'Debes aceptar todos los compromisos';
                 }
                 break;
-            case 6: // Firma
-                if (!signature) {
+            case 6:
+                if (!signature || !bossSignature || !advisorSignature) {
                     valid = false;
-                    errorMessage = 'Debes guardar tu firma primero';
+                    errorMessage = 'Debes guardar todas las firmas';
                 }
                 break;
         }
@@ -181,7 +225,6 @@ const FormPage = () => {
     
     const prevStep = () => setStep(step > 1 ? step - 1 : 1);
 
-    // Etiquetas para la barra de progreso
     const stepLabels = [
         "Estudiante",
         "Empresa",
@@ -195,14 +238,10 @@ const FormPage = () => {
         <div className="container mx-auto p-4 max-w-4xl">
             <h1 className="text-2xl font-bold mb-6 text-center">Formato de Iniciación y Compromiso</h1>
             
-            {/* Barra de progreso */}
             <div className="mb-8 bg-white p-4 rounded-lg shadow">
                 <div className="flex justify-between mb-2">
                     {stepLabels.map((label, index) => (
-                        <div 
-                            key={index} 
-                            className={`text-center flex-1 ${step > index ? 'text-green-600 font-bold' : 'text-gray-500'}`}
-                        >
+                        <div key={index} className={`text-center flex-1 ${step > index ? 'text-green-600 font-bold' : 'text-gray-500'}`}>
                             <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center ${
                                 step > index ? 'bg-green-500 text-white' : 
                                 step === index + 1 ? 'bg-red-600 text-white' : 'bg-gray-200'
@@ -221,7 +260,6 @@ const FormPage = () => {
                 </div>
             </div>
             
-            {/* Secciones del formulario */}
             <div className="bg-white p-6 rounded-lg shadow-md mb-6">
                 {step === 1 && (
                     <StudentSection 
@@ -264,7 +302,6 @@ const FormPage = () => {
                 )}
             </div>
 
-            {/* Navegación */}
             <div className="flex justify-between">
                 <button 
                     onClick={prevStep} 
@@ -288,9 +325,9 @@ const FormPage = () => {
                 ) : (
                     <button 
                         onClick={handleSubmit} 
-                        disabled={!signature}
+                        disabled={!signature || !bossSignature || !advisorSignature}
                         className={`px-4 py-2 rounded ${
-                            signature 
+                            signature && bossSignature && advisorSignature
                                 ? 'bg-green-500 hover:bg-green-600 text-white' 
                                 : 'bg-gray-400 cursor-not-allowed'
                         }`}
